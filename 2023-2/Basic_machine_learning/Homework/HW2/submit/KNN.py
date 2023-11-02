@@ -1,0 +1,68 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+class KNN():
+    def __init__(self, x_train, y_train, x_test, y_test):
+        self._x_train = x_train
+        self._y_train = y_train
+        self._x_test = x_test
+        self._y_test = y_test
+
+    def caculate_distacne(self, img1, img2):
+        temp = 0.0
+        for i in range(len(img1)):
+            temp += math.pow(int(img1[i])-int(img2[i]), 2)
+        result = math.sqrt(temp)
+        return result
+
+    def find_nearest_neighbors(self, target_img, k):
+        distance_list = []
+        for index in range(len(self._x_train)):
+            element = (index, self.caculate_distacne(target_img, 
+self._x_train[index]))
+            distance_list.append(element)
+        distance_list.sort(key=lambda item: item[1])
+        return distance_list[:k]
+
+    def weighted_vote(self, neighbors):
+        vote_result = [0 for _ in range(10)]
+        for neighbor in neighbors:
+            label_train_set = self._y_train[neighbor[0]]
+            weighted_value = 1 / neighbor[1]
+            vote_result[label_train_set] += weighted_value
+
+        result_label = 0
+        label_weight = 0.0
+        for lab in range(10):
+            if label_weight < vote_result[lab]:
+                result_label = lab
+                label_weight = vote_result[lab]
+        return result_label
+
+    def run(self):
+        accuracy_list = []
+        k_list = [k for k in range(21, 30, 2)]
+
+        max_accuracy = 0
+        optimal_k = 0
+        for k in k_list:
+            predict_list = []
+            print(k)
+            for i in range(len(self._x_test)):
+                print("test인덱스: {}".format(i))
+                target = self._x_test[i]
+                neighbors = self.find_nearest_neighbors(target, k=k)
+                test_result = self.weighted_vote(neighbors)
+                predict_list.append(test_result)
+            accuracy=np.mean(self._y_test == np.array(predict_list))
+            # 정화도가 가장높은 최적의 k값을 저장
+            if accuracy > max_accuracy:
+                max_accuracy = accuracy
+                optimal_k = k
+            accuracy_list.append(accuracy)
+
+        plt.plot(k_list, accuracy_list, 'bs-')
+        plt.xlabel = 'k-neighbor'
+        plt.ylabel = 'accuracy'
+        plt.show()
+        print("최적의 k값은 {}".format(optimal_k))
