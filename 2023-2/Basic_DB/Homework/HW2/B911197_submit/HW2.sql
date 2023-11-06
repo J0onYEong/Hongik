@@ -215,9 +215,13 @@ HAVING count(*) >= 2;
 
 -- (3) 10)
 SELECT "10)";
-SELECT c.이름 as 고객이름, c.전화번호 as 전화번호
-FROM stay_information si, hotel h, customer c
-WHERE si.CID = c.CID and si.HID = h.HID and si.`체크인 날짜` < '2022-08-30' and h.주소 like "%흑석동%";
+SELECT distinct c.이름 as 고객이름, c.전화번호 as 전화번호
+FROM booking b, customer c, hotel h
+WHERE b.CID=c.CID and b.HID=h.HID and b.CID in (
+	SELECT CID
+    FROM stay_information
+    WHERE `체크인 날짜` < '2022-08-30'
+) and h.주소 like '%흑석동';
 
 -- (3) 11)
 SELECT "11)";
