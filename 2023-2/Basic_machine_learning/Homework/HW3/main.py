@@ -11,92 +11,39 @@ from mnist_data import load_mnist
 
 class MNistWithNumpy:
 
-    def __init__(self):
-        (self.__x_test, self.__y_test) = load_test_data()
-        self.__network = load_trained_network()
+    # input_size: 테스트 케이스 하나의 입력 노드의 개수를 의미한다.
+    def __init__(self, input_size, hidden_layer_count, unit_size_for_each_layer, output_size, weight_init_std=0.01):
+        self.params = {}
+        self.hidden_layer_count = hidden_layer_count
 
-    def __forward(self, x, layer_count, unit_count_for_layer):
-        net = self.__network
+        if hidden_layer_count >= 1:
+            self.params['W0'] = weight_init_std * \
+                                np.random.randn(input_size, unit_size_for_each_layer[0])
 
-        W1, W2, W3 = net['W1'], net['W2'], net['W3']
-        b1, b2, b3 = net['b1'], net['b2'], net['b3']
+            last_key = 'W' + str(hidden_layer_count)
 
-        modified_w1 = W1[:, :unit_count_for_layer[0]]
-        modified_w2 = W2[:unit_count_for_layer[0], :unit_count_for_layer[1]]
-        modified_w3 = W3[:unit_count_for_layer[1], :]
+            self.params[last_key] = weight_init_std * \
+                                    np.random.randn(unit_size_for_each_layer[hidden_layer_count-1], output_size)
 
-        modified_b1 = b1[:unit_count_for_layer[0]]
-        modified_b2 = b2[:unit_count_for_layer[1]]
-        modified_b3 = b3
+            for index in range(1, hidden_layer_count, 1):
+                key = 'W' + str(index)
 
-        if layer_count == 1:
-            w1 = W1[:, :10]
-            b1 = b1[:10]
-            a1 = np.dot(x, w1) + b1
-            y = softmax(a1)
-            return y
-        elif layer_count == 2:
-            a1 = np.dot(x, modified_w1) + modified_b1
-            z1 = sigmoid(a1)
+                now_unit_count = unit_size_for_each_layer[index]
+                prev_unit_count = input_size
 
-            w2 = modified_w2[:, :10]
-            b2 = b2[:10]
+                if index > 0:
+                    prev_unit_count = unit_size_for_each_layer[index-1]
 
-            a2 = np.dot(z1, modified_w2) + modified_b2
-            y = softmax(a2)
-            return y
+                self.params[key] = weight_init_std * \
+                    np.random.randn(prev_unit_count, now_unit_count)
 
-        a1 = np.dot(x, modified_w1) + modified_b1
-        z1 = sigmoid(a1)
-        a2 = np.dot(z1, modified_w2) + modified_b2
-        z2 = sigmoid(a2)
-        a3 = np.dot(z2, modified_w3) + modified_b3
-        y = softmax(a3)
-        return y
+    def print_params(self):
 
-    def __calculate_accuracy(self,  batch_size, layer_coun=3, unit_count_for_layer=[50, 100, 10]):
-        accuracy_count = 0
+        for index in range(self.hidden_layer_count+1):
 
-        x_data = self.__x_test
-        y_data = self.__y_test
+            key = 'W' + str(index)
 
-        for i in range(0, len(x_data), batch_size):
-            x_batch = x_data[i:i + batch_size]
-            y_batch = self.__forward(x_batch, layer_coun, unit_count_for_layer)
-            predicted_labels = np.argmax(y_batch, axis=1)
-            accuracy_count += np.sum(predicted_labels == y_data[i:i + batch_size])
-
-        accuracy = float(accuracy_count) / len(x_data)
-        return accuracy
-
-    def find_best_fit(self):
-
-        best_batch_size = 1
-        best_unit_count = [1, 1, 10]
-        best_layer_count = 1
-        best_accuracy = 0.0
-
-        for batch_size in range(10, 1001, 30):
-            for layer_count in range(1, 4, 1):
-                for first_unit_count in range(1, 52, 5):
-                    for second_unit_count in range(1, 102, 10):
-                        temp_unit_count = [first_unit_count, second_unit_count, 10]
-                        temp_accuracy = self.__calculate_accuracy(batch_size, layer_count, temp_unit_count)
-
-                        if temp_accuracy >= best_accuracy:
-                            print("update batch_size: ", batch_size)
-                            print("update best_layer_count: ", layer_count)
-                            print("update unit_count: ", temp_unit_count)
-                            print("update 정확도: ", temp_accuracy)
-                            best_batch_size = batch_size
-                            best_layer_count = layer_count
-                            best_unit_count = temp_unit_count
-                            best_accuracy = temp_accuracy
-
-        print("최적 batch_size: ", best_batch_size)
-        print("최적 best_layer_count: ", best_layer_count)
-        print("최적 unit_count: ", best_unit_count)
-        print("최고 정확도: ", best_accuracy)
+            print("{}: {}".format(key, self.params[key].shape))
 
 
 def sigmoid(x):
@@ -121,6 +68,6 @@ def load_test_data():
     return x_test, t_test
 
 
-ins = MNistWithNumpy()
+ins = MNistWithNumpy(784, 2, [10, 20], 10)
 
-ins.find_best_fit()
+ins.print_params()
