@@ -9,9 +9,15 @@ import pickle
 from PIL import Image
 from mnist_data import load_mnist
 
+
 class MNistWithNumpy:
 
     # input_size: 테스트 케이스 하나의 입력 노드의 개수를 의미한다.
+    # 매개변수
+    #   - input_size : 입력층의 노드수를 의미한다.
+    #   - hidden_layer_count : 은닉층의 개수를 의미한다.
+    #   - unit_size_for_each_layer : 각각의 은닉층의 노드수를 의미한다.
+    #   - output_size : 출력층의 노드수를 의미한다.
     def __init__(self, input_size, hidden_layer_count, unit_size_for_each_layer, output_size, weight_init_std=0.01):
         self.params = {}
         self.hidden_layer_count = hidden_layer_count
@@ -19,14 +25,18 @@ class MNistWithNumpy:
         if hidden_layer_count >= 1:
             self.params['W0'] = weight_init_std * \
                                 np.random.randn(input_size, unit_size_for_each_layer[0])
+            self.params['B0'] = np.zeros(unit_size_for_each_layer[0])
 
-            last_key = 'W' + str(hidden_layer_count)
+            last_weight_key = 'W' + str(hidden_layer_count)
+            last_bias_key = 'B' + str(hidden_layer_count)
 
-            self.params[last_key] = weight_init_std * \
+            self.params[last_weight_key] = weight_init_std * \
                                     np.random.randn(unit_size_for_each_layer[hidden_layer_count-1], output_size)
+            self.params[last_bias_key] = np.zeros(output_size)
 
             for index in range(1, hidden_layer_count, 1):
-                key = 'W' + str(index)
+                weight_key = 'W' + str(index)
+                bias_key = 'B' + str(index)
 
                 now_unit_count = unit_size_for_each_layer[index]
                 prev_unit_count = input_size
@@ -34,16 +44,21 @@ class MNistWithNumpy:
                 if index > 0:
                     prev_unit_count = unit_size_for_each_layer[index-1]
 
-                self.params[key] = weight_init_std * \
+                self.params[weight_key] = weight_init_std * \
                     np.random.randn(prev_unit_count, now_unit_count)
 
+                self.params[bias_key] = np.zeros(now_unit_count)
+
+    # 매개변수를 바탕으로 생성된 가중치 배열의 차원을 출력한다.
     def print_params(self):
 
         for index in range(self.hidden_layer_count+1):
 
-            key = 'W' + str(index)
+            weight_key = 'W' + str(index)
+            bias_key = 'B' + str(index)
 
-            print("{}: {}".format(key, self.params[key].shape))
+            print("{}: {}".format(weight_key, self.params[weight_key].shape))
+            print("{}: {}".format(bias_key, self.params[bias_key].shape))
 
 
 def sigmoid(x):
