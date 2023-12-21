@@ -61,6 +61,32 @@ class MNistWithNumpy:
             print("{}: {}".format(bias_key, self.params[bias_key].shape))
 
 
+    def predict(self, x):
+
+        temp_weight = self.params['W0']
+        temp_bias = self.params['B0']
+        temp_a = np.dot(x, temp_weight) + temp_bias
+        temp_z = sigmoid(temp_a)
+
+        for index in range(1, self.hidden_layer_count+1, 1):
+            weight_key = 'W' + str(index)
+            bias_key = 'B' + str(index)
+
+            temp_weight = self.params[weight_key]
+            temp_bias = self.params[bias_key]
+
+            temp_a = np.dot(temp_z, temp_weight) + temp_bias
+
+            if index != self.hidden_layer_count:
+                temp_z = sigmoid(temp_a)
+                continue
+
+            temp_z = softmax(temp_a)
+
+        print(temp_z)
+
+
+
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
@@ -83,6 +109,6 @@ def load_test_data():
     return x_test, t_test
 
 
-ins = MNistWithNumpy(784, 2, [10, 20], 10)
+ins = MNistWithNumpy(5, 2, [10, 20], 10)
 
 ins.print_params()
